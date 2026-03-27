@@ -1,28 +1,654 @@
-{
-  "farmer_name": "John Kamau",
-  "phone": "+254712345678",
-  "membership_number": "M-10234",
-  "ward": "Kinale",
-  "demo_attended": "yes",
-  "irrigation_type": "Drip irrigation",
-  "produces": [
-    {
-      "produce": "Kales",
-      "varieties": ["Kinale", "Curly kale"],
-      "volume": "500 kg",
-      "harvest_date": "2026-04-15"
-    },
-    {
-      "produce": "Spring onions",
-      "varieties": [],
-      "volume": "120 bundles",
-      "harvest_date": "2026-04-20"
-    },
-    {
-      "produce": "Tomatoes",
-      "varieties": ["Super Rio", "Elite F1"],
-      "volume": "80 crates",
-      "harvest_date": "2026-05-02"
-    }
-  ]
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Farmer Registration</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 16px;
+    background: #f5f5f5;
+    color: #1a1a1a;
+    min-height: 100vh;
+  }
+
+  .page {
+    max-width: 620px;
+    margin: 0 auto;
+    padding: 1.25rem 1rem 4rem;
+  }
+
+  .header { margin-bottom: 1.25rem; }
+  .header h1 { font-size: 20px; font-weight: 600; margin-bottom: 4px; }
+  .header p { font-size: 13px; color: #666; }
+
+  .section {
+    background: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 12px;
+    padding: 1rem 1.125rem;
+    margin-bottom: 1rem;
+  }
+  .section-title {
+    font-size: 11px;
+    font-weight: 600;
+    color: #888;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    margin-bottom: .875rem;
+  }
+
+  .field { margin-bottom: .875rem; }
+  .field:last-child { margin-bottom: 0; }
+  .field label {
+    display: block;
+    font-size: 14px;
+    font-weight: 500;
+    color: #333;
+    margin-bottom: 5px;
+  }
+  .field label .req { color: #c0392b; margin-left: 2px; }
+
+  .field input, .field select {
+    width: 100%;
+    font-size: 16px;
+    padding: 11px 12px;
+    border: 1px solid #d0d0d0;
+    border-radius: 8px;
+    background: #fafafa;
+    color: #1a1a1a;
+    -webkit-appearance: none;
+    appearance: none;
+    transition: border-color .15s, box-shadow .15s;
+  }
+  .field input:focus, .field select:focus {
+    outline: none;
+    border-color: #1D9E75;
+    box-shadow: 0 0 0 3px rgba(29,158,117,.12);
+    background: #fff;
+  }
+  .field input.err, .field select.err {
+    border-color: #c0392b;
+    box-shadow: 0 0 0 3px rgba(192,57,43,.1);
+  }
+  .err-msg {
+    display: none;
+    font-size: 12px;
+    color: #c0392b;
+    margin-top: 4px;
+  }
+  .field.has-error .err-msg { display: block; }
+
+  .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  @media (max-width: 400px) { .field-row { grid-template-columns: 1fr; } }
+
+  /* Produce grid */
+  .produce-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+  @media (max-width: 360px) { .produce-grid { grid-template-columns: repeat(2, 1fr); } }
+
+  .produce-chip { position: relative; }
+  .produce-chip input[type="checkbox"] { position: absolute; opacity: 0; width: 0; height: 0; }
+  .produce-chip label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 46px;
+    padding: 8px 6px;
+    font-size: 13px;
+    font-weight: 500;
+    text-align: center;
+    line-height: 1.3;
+    border: 1px solid #d0d0d0;
+    border-radius: 8px;
+    cursor: pointer;
+    background: #fafafa;
+    color: #555;
+    transition: all .15s;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .produce-chip input:checked + label {
+    background: #E1F5EE;
+    border-color: #0F6E56;
+    color: #085041;
+  }
+  .produce-grid.grid-err { outline: 2px solid #c0392b; outline-offset: 3px; border-radius: 8px; }
+  .produce-count-badge {
+    display: inline-block;
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 20px;
+    background: #E1F5EE;
+    color: #085041;
+    font-weight: 600;
+    margin-left: 8px;
+    vertical-align: middle;
+  }
+
+  /* Produce detail cards */
+  .variety-card {
+    border: 1px solid #e0e0e0;
+    border-left: 3px solid #1D9E75;
+    border-radius: 0 8px 8px 0;
+    padding: .875rem 1rem;
+    margin-bottom: .75rem;
+    background: #fff;
+  }
+  .variety-card:last-child { margin-bottom: 0; }
+  .variety-card h3 {
+    font-size: 15px;
+    font-weight: 600;
+    margin-bottom: .75rem;
+    color: #1a1a1a;
+  }
+
+  /* Variety checkboxes */
+  .variety-checks { margin-bottom: .875rem; }
+  .variety-checks .check-label {
+    font-size: 14px;
+    font-weight: 500;
+    color: #333;
+    margin-bottom: 6px;
+    display: block;
+  }
+  .variety-checks .check-label .req { color: #c0392b; margin-left: 2px; }
+  .variety-list { display: flex; flex-direction: column; gap: 6px; }
+  .variety-item { display: flex; align-items: center; gap: 10px; cursor: pointer; }
+  .variety-item input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    min-width: 20px;
+    border: 1.5px solid #aaa;
+    border-radius: 4px;
+    background: #fafafa;
+    cursor: pointer;
+    -webkit-appearance: none;
+    appearance: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all .15s;
+    position: relative;
+  }
+  .variety-item input[type="checkbox"]:checked {
+    background: #1D9E75;
+    border-color: #1D9E75;
+  }
+  .variety-item input[type="checkbox"]:checked::after {
+    content: '';
+    position: absolute;
+    left: 5px; top: 2px;
+    width: 5px; height: 9px;
+    border: 2px solid #fff;
+    border-top: none; border-left: none;
+    transform: rotate(45deg);
+  }
+  .variety-item input[type="checkbox"].auto-checked:disabled {
+    background: #1D9E75;
+    border-color: #1D9E75;
+    opacity: 1;
+    cursor: default;
+  }
+  .variety-item input[type="checkbox"].auto-checked:disabled + span {
+    color: #085041;
+    font-weight: 500;
+  }
+  .variety-item span { font-size: 14px; color: #333; line-height: 1.4; }
+  .variety-err { display: none; font-size: 12px; color: #c0392b; margin-top: 4px; }
+  .variety-checks.has-error .variety-err { display: block; }
+
+  /* Radio (demo) */
+  .radio-group { display: flex; gap: 10px; }
+  .radio-opt { flex: 1; position: relative; }
+  .radio-opt input[type="radio"] { position: absolute; opacity: 0; width: 0; height: 0; }
+  .radio-opt label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 11px 8px;
+    font-size: 15px;
+    font-weight: 500;
+    border: 1px solid #d0d0d0;
+    border-radius: 8px;
+    cursor: pointer;
+    background: #fafafa;
+    color: #555;
+    transition: all .15s;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .radio-opt input:checked + label {
+    background: #E1F5EE;
+    border-color: #0F6E56;
+    color: #085041;
+  }
+
+  /* Empty hint */
+  .empty-hint {
+    font-size: 13px;
+    color: #999;
+    text-align: center;
+    padding: .875rem;
+    border: 1px dashed #d0d0d0;
+    border-radius: 8px;
+  }
+
+  /* Submit */
+  .submit-btn {
+    display: block;
+    width: 100%;
+    padding: 14px;
+    font-size: 16px;
+    font-weight: 600;
+    background: #1D9E75;
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    margin-top: 1.5rem;
+    transition: background .15s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .submit-btn:active { background: #0F6E56; }
+
+  /* Success */
+  .success-screen {
+    display: none;
+    text-align: center;
+    padding: 3rem 1rem;
+  }
+  .success-icon {
+    width: 64px;
+    height: 64px;
+    background: #E1F5EE;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1.25rem;
+  }
+  .success-icon svg { width: 32px; height: 32px; }
+  .success-screen h2 { font-size: 20px; font-weight: 600; margin-bottom: 8px; color: #085041; }
+  .success-screen p { font-size: 14px; color: #666; margin-bottom: 1.5rem; }
+  .new-entry-btn {
+    padding: 11px 28px;
+    font-size: 15px;
+    font-weight: 600;
+    background: #1D9E75;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- FORM -->
+  <div id="form-view">
+    <div class="header">
+      <h1>Farmer registration</h1>
+      <p>All fields marked <span style="color:#c0392b">*</span> are required</p>
+    </div>
+
+    <!-- Personal details -->
+    <div class="section">
+      <div class="section-title">Personal details</div>
+
+      <div class="field" id="f-name">
+        <label>Farmer name <span class="req">*</span></label>
+        <input type="text" id="name" placeholder="Full name" autocomplete="name">
+        <div class="err-msg">Please enter the farmer's name</div>
+      </div>
+
+      <div class="field-row">
+        <div class="field" id="f-phone">
+          <label>Phone number <span class="req">*</span></label>
+          <input type="tel" id="phone" placeholder="07XX XXX XXX" autocomplete="tel">
+          <div class="err-msg">Enter a valid phone number</div>
+        </div>
+        <div class="field" id="f-member">
+          <label>Membership no. <span class="req">*</span></label>
+          <input type="text" id="member" placeholder="e.g. 10234">
+          <div class="err-msg">Enter membership number</div>
+        </div>
+      </div>
+
+      <div class="field" id="f-ward">
+        <label>Area / ward <span class="req">*</span></label>
+        <input type="text" id="ward" placeholder="e.g. Kinale" autocomplete="off">
+        <div class="err-msg">Enter the area or ward</div>
+      </div>
+    </div>
+
+    <!-- Produces -->
+    <div class="section">
+      <div class="section-title">
+        Produces
+        <span class="produce-count-badge" id="prod-badge">0 selected</span>
+      </div>
+      <div class="produce-grid" id="produce-grid"></div>
+      <div class="err-msg" id="prod-err" style="margin-top:8px">Select at least one produce</div>
+    </div>
+
+    <!-- Produce details -->
+    <div class="section">
+      <div class="section-title">Produce details</div>
+      <div id="variety-container">
+        <div class="empty-hint">Select produces above to fill in details</div>
+      </div>
+    </div>
+
+    <!-- Demo training -->
+    <div class="section">
+      <div class="section-title">Demo training</div>
+      <div class="field" id="f-demo">
+        <label>Did you attend the demo trainings? <span class="req">*</span></label>
+        <div class="radio-group">
+          <div class="radio-opt">
+            <input type="radio" name="demo" id="demo-yes" value="yes">
+            <label for="demo-yes">Yes</label>
+          </div>
+          <div class="radio-opt">
+            <input type="radio" name="demo" id="demo-no" value="no">
+            <label for="demo-no">No</label>
+          </div>
+        </div>
+        <div class="err-msg" id="demo-err">Please select an option</div>
+      </div>
+    </div>
+
+    <!-- Irrigation -->
+    <div class="section">
+      <div class="section-title">Irrigation</div>
+      <div class="field" id="f-irrigation">
+        <label>What type of irrigation do you use? <span class="req">*</span></label>
+        <input type="text" id="irrigation" placeholder="e.g. Drip irrigation" autocomplete="off">
+        <div class="err-msg">Please enter the irrigation type</div>
+      </div>
+    </div>
+
+    <button class="submit-btn" onclick="handleSubmit()">Submit</button>
+  </div>
+
+  <!-- SUCCESS -->
+  <div class="success-screen" id="success-view">
+    <div class="success-icon">
+      <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="16" cy="16" r="16" fill="#1D9E75"/>
+        <path d="M9 16.5L13.5 21L23 11" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+    <h2>Submitted successfully</h2>
+    <p>Farmer data has been recorded</p>
+    <button class="new-entry-btn" onclick="resetForm()">New entry</button>
+  </div>
+
+</div>
+
+<script>
+const PRODUCES = [
+  { id:'kales',        label:'Kales',               varieties:['Kinale','Thousand headed','Curly kale'] },
+  { id:'spinach',      label:'Spinach',              varieties:['Fordhook giant'] },
+  { id:'cabbage',      label:'Cabbage',              varieties:['Pruktor F1','Gloria F1','Kiboko','Copenhagen'] },
+  { id:'broccoli',     label:'Broccoli',             varieties:['Heritage F1'] },
+  { id:'cauliflower',  label:'Cauliflower',          varieties:['Smilla F1'] },
+  { id:'leeks',        label:'Leeks',                varieties:['Standard leeks'] },
+  { id:'celery',       label:'Celery',               varieties:['Pascal','Tall Utah'] },
+  { id:'lettuce',      label:'Lettuce',              varieties:['Loose leaf','Butterhead'] },
+  { id:'carrot',       label:'Carrot',               varieties:['Nantes'] },
+  { id:'red_onion',    label:'Red onion',            varieties:['Red galaxy F1','Red creole','Bombay red','Jambar F1','Neptune F1'] },
+  { id:'white_onion',  label:'White onion',          varieties:['Texas Grano'] },
+  { id:'spring_onion', label:'Spring onions',        varieties:[] },
+  { id:'garlic',       label:'Garlic',               varieties:['Local'] },
+  { id:'french_beans', label:'French beans',         varieties:['Kazuri','Samantha','Amy','Paulista'] },
+  { id:'tomatoes',     label:'Tomatoes',             varieties:['Super Rio','Crown F1','Elite F1'] },
+  { id:'yellow_caps',  label:'Yellow capsicum',      varieties:['California wonder'] },
+  { id:'green_caps',   label:'Green capsicum',       varieties:['California wonder'] },
+  { id:'red_caps',     label:'Red capsicum',         varieties:['California wonder'] },
+  { id:'chillies',     label:'Chillies',             varieties:['Red thunder F1'] },
+  { id:'courgette',    label:'Courgette / zucchini', varieties:['Amanda F1'] },
+  { id:'cucumber',     label:'Cucumber',             varieties:['Ashley'] },
+  { id:'butternut',    label:'Butternut',            varieties:[] },
+  { id:'pumpkin',      label:'Pumpkin',              varieties:[] },
+];
+
+const selected = new Set();
+const N8N_WEBHOOK_URL = 'https://n8n-takumi.onrender.com/webhook/b0d1f1fc-67ff-447d-be49-15ebd6a7b03d';
+
+/* ── Render produce grid ── */
+function renderGrid() {
+  document.getElementById('produce-grid').innerHTML = PRODUCES.map(p => `
+    <div class="produce-chip">
+      <input type="checkbox" id="p_${p.id}" onchange="toggleProduce('${p.id}')">
+      <label for="p_${p.id}">${p.label}</label>
+    </div>`).join('');
 }
+
+/* ── Toggle produce selection ── */
+function toggleProduce(id) {
+  selected.has(id) ? selected.delete(id) : selected.add(id);
+  const n = selected.size;
+  document.getElementById('prod-badge').textContent = n === 1 ? '1 selected' : n + ' selected';
+  document.getElementById('produce-grid').classList.remove('grid-err');
+  document.getElementById('prod-err').style.display = 'none';
+  renderVarietyCards();
+}
+
+/* ── Render variety cards ── */
+function renderVarietyCards() {
+  const container = document.getElementById('variety-container');
+  if (selected.size === 0) {
+    container.innerHTML = '<div class="empty-hint">Select produces above to fill in details</div>';
+    return;
+  }
+
+  container.innerHTML = PRODUCES.filter(p => selected.has(p.id)).map(p => {
+    const singleVariety = p.varieties.length === 1;
+    const multiVariety  = p.varieties.length > 1;
+    let varietyHTML = '';
+
+    if (singleVariety) {
+      varietyHTML = `
+        <div class="variety-checks">
+          <span class="check-label">Variety</span>
+          <div class="variety-list">
+            <label class="variety-item">
+              <input type="checkbox" name="var_${p.id}" value="${p.varieties[0]}" checked disabled class="auto-checked">
+              <span>${p.varieties[0]}</span>
+            </label>
+          </div>
+        </div>`;
+    } else if (multiVariety) {
+      varietyHTML = `
+        <div class="variety-checks" id="vc_${p.id}">
+          <span class="check-label">Variety <span class="req">*</span></span>
+          <div class="variety-list">
+            ${p.varieties.map(v => `
+              <label class="variety-item">
+                <input type="checkbox" name="var_${p.id}" value="${v}">
+                <span>${v}</span>
+              </label>`).join('')}
+          </div>
+          <div class="variety-err">Select at least one variety</div>
+        </div>`;
+    }
+
+    return `
+      <div class="variety-card" id="card_${p.id}">
+        <h3>${p.label}</h3>
+        ${varietyHTML}
+        <div class="field-row">
+          <div class="field" id="f-vol-${p.id}">
+            <label>Volume <span class="req">*</span></label>
+            <input type="text" id="vol_${p.id}" placeholder="e.g. 500 kg">
+            <div class="err-msg">Enter expected volume</div>
+          </div>
+          <div class="field" id="f-date-${p.id}">
+            <label>Harvest date <span class="req">*</span></label>
+            <input type="date" id="date_${p.id}">
+            <div class="err-msg">Select a harvest date</div>
+          </div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+/* ── Validation helper ── */
+function setErr(fieldId, inputId, show) {
+  const f = document.getElementById(fieldId);
+  const i = inputId ? document.getElementById(inputId) : null;
+  if (!f) return;
+  if (show) { f.classList.add('has-error'); if (i) i.classList.add('err'); }
+  else      { f.classList.remove('has-error'); if (i) i.classList.remove('err'); }
+}
+
+/* ── Validate ── */
+function validate() {
+  let ok = true;
+
+  const name = document.getElementById('name').value.trim();
+  setErr('f-name', 'name', !name);
+  if (!name) ok = false;
+
+  const phone = document.getElementById('phone').value.trim();
+  const phoneOk = phone && /^[\d\s\+\-]{7,15}$/.test(phone);
+  setErr('f-phone', 'phone', !phoneOk);
+  if (!phoneOk) ok = false;
+
+  const member = document.getElementById('member').value.trim();
+  setErr('f-member', 'member', !member);
+  if (!member) ok = false;
+
+  const ward = document.getElementById('ward').value.trim();
+  setErr('f-ward', 'ward', !ward);
+  if (!ward) ok = false;
+
+  if (selected.size === 0) {
+    document.getElementById('produce-grid').classList.add('grid-err');
+    document.getElementById('prod-err').style.display = 'block';
+    ok = false;
+  }
+
+  PRODUCES.filter(p => selected.has(p.id)).forEach(p => {
+    if (p.varieties.length > 1) {
+      const checked = document.querySelectorAll(`input[name="var_${p.id}"]:checked`);
+      const vc = document.getElementById('vc_' + p.id);
+      if (checked.length === 0) { if (vc) vc.classList.add('has-error'); ok = false; }
+      else                      { if (vc) vc.classList.remove('has-error'); }
+    }
+
+    const vol = document.getElementById('vol_' + p.id);
+    setErr('f-vol-' + p.id, 'vol_' + p.id, !vol || !vol.value.trim());
+    if (!vol || !vol.value.trim()) ok = false;
+
+    const dt = document.getElementById('date_' + p.id);
+    setErr('f-date-' + p.id, 'date_' + p.id, !dt || !dt.value);
+    if (!dt || !dt.value) ok = false;
+  });
+
+  const demo = document.querySelector('input[name="demo"]:checked');
+  const fdemo = document.getElementById('f-demo');
+  const derr  = document.getElementById('demo-err');
+  if (!demo) { fdemo.classList.add('has-error'); derr.style.display = 'block'; ok = false; }
+  else       { fdemo.classList.remove('has-error'); derr.style.display = 'none'; }
+
+  const irrigation = document.getElementById('irrigation').value.trim();
+  setErr('f-irrigation', 'irrigation', !irrigation);
+  if (!irrigation) ok = false;
+
+  return ok;
+}
+
+/* ── Collect data ── */
+function collectData() {
+  const produces = PRODUCES.filter(p => selected.has(p.id)).map(p => {
+    let varieties = [];
+    if (p.varieties.length === 1) {
+      varieties = [p.varieties[0]];
+    } else if (p.varieties.length > 1) {
+      varieties = [...document.querySelectorAll(`input[name="var_${p.id}"]:checked`)].map(c => c.value);
+    }
+    return {
+      produce:      p.label,
+      varieties,
+      volume:       document.getElementById('vol_'  + p.id).value.trim(),
+      harvest_date: document.getElementById('date_' + p.id).value,
+    };
+  });
+
+  return {
+    farmer_name:       document.getElementById('name').value.trim(),
+    phone:             document.getElementById('phone').value.trim(),
+    membership_number: document.getElementById('member').value.trim(),
+    ward:              document.getElementById('ward').value.trim(),
+    demo_attended:     document.querySelector('input[name="demo"]:checked').value,
+    irrigation_type:   document.getElementById('irrigation').value.trim(),
+    produces,
+  };
+}
+
+/* ── Submit ── */
+async function handleSubmit() {
+  if (!validate()) {
+    const firstErr = document.querySelector('.has-error, .grid-err');
+    if (firstErr) firstErr.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    return;
+  }
+
+  const data = collectData();
+
+  try {
+    /* ===== N8N FETCH PLACEHOLDER (CLEARLY MARKED) - START =====
+       Replace N8N_WEBHOOK_URL above if your webhook URL changes.
+    */
+    const response = await fetch(N8N_WEBHOOK_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+    /* ===== N8N FETCH PLACEHOLDER (CLEARLY MARKED) - END ===== */
+
+    if (!response.ok) throw new Error('Webhook request failed');
+
+    document.getElementById('form-view').style.display = 'none';
+    document.getElementById('success-view').style.display = 'block';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  } catch (err) {
+    console.error('Submission error:', err);
+    alert('Submission failed. Please confirm the n8n webhook URL and try again.');
+  }
+}
+
+/* ── Reset ── */
+function resetForm() {
+  selected.clear();
+  document.querySelectorAll('input:not([disabled]), select').forEach(el => {
+    if (el.type === 'checkbox' || el.type === 'radio') el.checked = false;
+    else el.value = '';
+    el.classList.remove('err');
+  });
+  document.querySelectorAll('.has-error').forEach(el => el.classList.remove('has-error'));
+  document.querySelectorAll('.err-msg').forEach(el => el.style.display = '');
+  document.getElementById('produce-grid').classList.remove('grid-err');
+  document.getElementById('prod-err').style.display = 'none';
+  document.getElementById('prod-badge').textContent = '0 selected';
+  renderVarietyCards();
+  document.getElementById('success-view').style.display = 'none';
+  document.getElementById('form-view').style.display = 'block';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+/* ── Init ── */
+renderGrid();
+</script>
+</body>
+</html>
