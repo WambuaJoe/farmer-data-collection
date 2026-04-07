@@ -396,33 +396,35 @@
 
 <script>
 const PRODUCES = [
-  { id:'kales',        label:'Kales',               varieties:['Kinale','Thousand headed','Curly kale'] },
-  { id:'spinach',      label:'Spinach',              varieties:['Fordhook giant'] },
-  { id:'cabbage',      label:'Cabbage',              varieties:['Pruktor F1','Gloria F1','Kiboko','Copenhagen'] },
   { id:'broccoli',     label:'Broccoli',             varieties:['Heritage F1'] },
-  { id:'cauliflower',  label:'Cauliflower',          varieties:['Smilla F1'] },
-  { id:'leeks',        label:'Leeks',                varieties:['Standard leeks'] },
-  { id:'celery',       label:'Celery',               varieties:['Pascal','Tall Utah'] },
-  { id:'lettuce',      label:'Lettuce',              varieties:['Loose leaf','Butterhead'] },
+  { id:'butternut',    label:'Butternut',            varieties:[] },
+  { id:'cabbage',      label:'Cabbage',              varieties:['Copenhagen','Gloria F1','Kiboko','Pruktor F1'] },
   { id:'carrot',       label:'Carrot',               varieties:['Nantes'] },
-  { id:'red_onion',    label:'Red onion',            varieties:['Red galaxy F1','Red creole','Bombay red','Jambar F1','Neptune F1'] },
-  { id:'white_onion',  label:'White onion',          varieties:['Texas Grano'] },
-  { id:'spring_onion', label:'Spring onions',        varieties:[] },
-  { id:'garlic',       label:'Garlic',               varieties:['Local'] },
-  { id:'french_beans', label:'French beans',         varieties:['Kazuri','Samantha','Amy','Paulista'] },
-  { id:'tomatoes',     label:'Tomatoes',             varieties:['Super Rio','Crown F1','Elite F1'] },
-  { id:'yellow_caps',  label:'Yellow capsicum',      varieties:['California wonder'] },
-  { id:'green_caps',   label:'Green capsicum',       varieties:['California wonder'] },
-  { id:'red_caps',     label:'Red capsicum',         varieties:['California wonder'] },
+  { id:'cauliflower',  label:'Cauliflower',          varieties:['Smilla F1'] },
+  { id:'celery',       label:'Celery',               varieties:['Pascal','Tall Utah'] },
   { id:'chillies',     label:'Chillies',             varieties:['Red thunder F1'] },
   { id:'courgette',    label:'Courgette / zucchini', varieties:['Amanda F1'] },
   { id:'cucumber',     label:'Cucumber',             varieties:['Ashley'] },
-  { id:'butternut',    label:'Butternut',            varieties:[] },
+  { id:'french_beans', label:'French beans',         varieties:['Amy','Kazuri','Paulista','Samantha'] },
+  { id:'garlic',       label:'Garlic',               varieties:['Local'] },
+  { id:'green_caps',   label:'Green capsicum',       varieties:['California wonder'] },
+  { id:'kales',        label:'Kales',                varieties:['Curly kale','Kinale','Thousand headed'] },
+  { id:'leeks',        label:'Leeks',                varieties:['Standard leeks'] },
+  { id:'lettuce',      label:'Lettuce',              varieties:['Butterhead','Loose leaf'] },
+  { id:'potatoes',     label:'Potatoes',             varieties:['Arica','Makis','Shangi','Unica'] },
   { id:'pumpkin',      label:'Pumpkin',              varieties:[] },
+  { id:'red_cabbage',  label:'Red cabbage',          varieties:[] },
+  { id:'red_caps',     label:'Red capsicum',         varieties:['California wonder'] },
+  { id:'red_onion',    label:'Red onion',            varieties:['Bombay red','Jambar F1','Neptune F1','Red creole','Red galaxy F1'] },
+  { id:'spinach',      label:'Spinach',              varieties:['Fordhook giant'] },
+  { id:'spring_onion', label:'Spring onions',        varieties:[] },
+  { id:'tomatoes',     label:'Tomatoes',             varieties:['Crown F1','Elite F1','Super Rio'] },
+  { id:'white_onion',  label:'White onion',          varieties:['Texas Grano'] },
+  { id:'yellow_caps',  label:'Yellow capsicum',      varieties:['California wonder'] },
 ];
 
 const selected = new Set();
-const N8N_WEBHOOK_URL = 'https://n8n-takumi.onrender.com/webhook/b0d1f1fc-67ff-447d-be49-15ebd6a7b03d';
+const N8N_WEBHOOK_URL = 'https://takumi-n8n.up.railway.app/webhook-test/b0d1f1fc-67ff-447d-be49-15ebd6a7b03d';
 
 /* ── Render produce grid ── */
 function renderGrid() {
@@ -474,7 +476,7 @@ function renderVarietyCards() {
           <div class="variety-list">
             ${p.varieties.map(v => `
               <label class="variety-item">
-                <input type="checkbox" name="var_${p.id}" value="${v}">
+                <input type="checkbox" name="var_${p.id}" value="${v}" onchange="updateVarietyFields('${p.id}')">
                 <span>${v}</span>
               </label>`).join('')}
           </div>
@@ -482,21 +484,57 @@ function renderVarietyCards() {
         </div>`;
     }
 
+    const sharedFieldsHTML = `
+      <div class="field-row">
+        <div class="field" id="f-vol-${p.id}">
+          <label>Volume <span class="req">*</span></label>
+          <input type="text" id="vol_${p.id}" placeholder="e.g. 500 kg">
+          <div class="err-msg">Enter expected volume</div>
+        </div>
+        <div class="field" id="f-date-${p.id}">
+          <label>Harvest date <span class="req">*</span></label>
+          <input type="date" id="date_${p.id}">
+          <div class="err-msg">Select a harvest date</div>
+        </div>
+      </div>`;
+
+    const perVarietyFieldsHTML = `<div id="vf_${p.id}"></div>`;
+
     return `
       <div class="variety-card" id="card_${p.id}">
         <h3>${p.label}</h3>
         ${varietyHTML}
-        <div class="field-row">
-          <div class="field" id="f-vol-${p.id}">
-            <label>Volume <span class="req">*</span></label>
-            <input type="text" id="vol_${p.id}" placeholder="e.g. 500 kg">
-            <div class="err-msg">Enter expected volume</div>
-          </div>
-          <div class="field" id="f-date-${p.id}">
-            <label>Harvest date <span class="req">*</span></label>
-            <input type="date" id="date_${p.id}">
-            <div class="err-msg">Select a harvest date</div>
-          </div>
+        ${multiVariety ? perVarietyFieldsHTML : sharedFieldsHTML}
+      </div>`;
+  }).join('');
+
+  PRODUCES.filter(p => selected.has(p.id) && p.varieties.length > 1).forEach(p => updateVarietyFields(p.id));
+}
+
+function varietyKey(name) {
+  return name.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
+}
+
+function updateVarietyFields(produceId) {
+  const produce = PRODUCES.find(p => p.id === produceId);
+  const container = document.getElementById('vf_' + produceId);
+  if (!produce || !container) return;
+
+  const selectedVarieties = [...document.querySelectorAll(`input[name="var_${produceId}"]:checked`)].map(c => c.value);
+
+  container.innerHTML = selectedVarieties.map(v => {
+    const key = varietyKey(v);
+    return `
+      <div class="field-row" id="varrow_${produceId}_${key}" style="margin-top:.875rem">
+        <div class="field" id="f-vol-${produceId}-${key}">
+          <label>${v} - Volume <span class="req">*</span></label>
+          <input type="text" id="vol_${produceId}_${key}" placeholder="e.g. 500 kg">
+          <div class="err-msg">Enter expected volume</div>
+        </div>
+        <div class="field" id="f-date-${produceId}-${key}">
+          <label>${v} - Harvest date <span class="req">*</span></label>
+          <input type="date" id="date_${produceId}_${key}">
+          <div class="err-msg">Select a harvest date</div>
         </div>
       </div>`;
   }).join('');
@@ -540,19 +578,30 @@ function validate() {
 
   PRODUCES.filter(p => selected.has(p.id)).forEach(p => {
     if (p.varieties.length > 1) {
-      const checked = document.querySelectorAll(`input[name="var_${p.id}"]:checked`);
+      const checked = [...document.querySelectorAll(`input[name="var_${p.id}"]:checked`)];
       const vc = document.getElementById('vc_' + p.id);
       if (checked.length === 0) { if (vc) vc.classList.add('has-error'); ok = false; }
       else                      { if (vc) vc.classList.remove('has-error'); }
+
+      checked.forEach(c => {
+        const key = varietyKey(c.value);
+        const vol = document.getElementById(`vol_${p.id}_${key}`);
+        setErr(`f-vol-${p.id}-${key}`, `vol_${p.id}_${key}`, !vol || !vol.value.trim());
+        if (!vol || !vol.value.trim()) ok = false;
+
+        const dt = document.getElementById(`date_${p.id}_${key}`);
+        setErr(`f-date-${p.id}-${key}`, `date_${p.id}_${key}`, !dt || !dt.value);
+        if (!dt || !dt.value) ok = false;
+      });
+    } else {
+      const vol = document.getElementById('vol_' + p.id);
+      setErr('f-vol-' + p.id, 'vol_' + p.id, !vol || !vol.value.trim());
+      if (!vol || !vol.value.trim()) ok = false;
+
+      const dt = document.getElementById('date_' + p.id);
+      setErr('f-date-' + p.id, 'date_' + p.id, !dt || !dt.value);
+      if (!dt || !dt.value) ok = false;
     }
-
-    const vol = document.getElementById('vol_' + p.id);
-    setErr('f-vol-' + p.id, 'vol_' + p.id, !vol || !vol.value.trim());
-    if (!vol || !vol.value.trim()) ok = false;
-
-    const dt = document.getElementById('date_' + p.id);
-    setErr('f-date-' + p.id, 'date_' + p.id, !dt || !dt.value);
-    if (!dt || !dt.value) ok = false;
   });
 
   const demo = document.querySelector('input[name="demo"]:checked');
@@ -571,17 +620,29 @@ function validate() {
 /* ── Collect data ── */
 function collectData() {
   const produces = PRODUCES.filter(p => selected.has(p.id)).map(p => {
-    let varieties = [];
-    if (p.varieties.length === 1) {
-      varieties = [p.varieties[0]];
-    } else if (p.varieties.length > 1) {
-      varieties = [...document.querySelectorAll(`input[name="var_${p.id}"]:checked`)].map(c => c.value);
+    if (p.varieties.length > 1) {
+      const checkedVarieties = [...document.querySelectorAll(`input[name="var_${p.id}"]:checked`)].map(c => c.value);
+      return {
+        produce: p.label,
+        varieties: checkedVarieties.map(v => {
+          const key = varietyKey(v);
+          return {
+            name: v,
+            volume: document.getElementById(`vol_${p.id}_${key}`).value.trim(),
+            harvest_date: document.getElementById(`date_${p.id}_${key}`).value,
+          };
+        }),
+      };
     }
+
+    const fallbackName = p.varieties.length === 1 ? p.varieties[0] : p.label;
     return {
-      produce:      p.label,
-      varieties,
-      volume:       document.getElementById('vol_'  + p.id).value.trim(),
-      harvest_date: document.getElementById('date_' + p.id).value,
+      produce: p.label,
+      varieties: [{
+        name: fallbackName,
+        volume: document.getElementById('vol_' + p.id).value.trim(),
+        harvest_date: document.getElementById('date_' + p.id).value,
+      }],
     };
   });
 
@@ -605,19 +666,22 @@ async function handleSubmit() {
   }
 
   const data = collectData();
+  const body = new URLSearchParams({
+    farmer_name: data.farmer_name,
+    phone: data.phone,
+    membership_number: data.membership_number,
+    ward: data.ward,
+    demo_attended: data.demo_attended,
+    irrigation_type: data.irrigation_type,
+    produces: JSON.stringify(data.produces),
+  });
 
   try {
-    /* ===== N8N FETCH PLACEHOLDER (CLEARLY MARKED) - START =====
-       Replace N8N_WEBHOOK_URL above if your webhook URL changes.
-    */
-    const response = await fetch(N8N_WEBHOOK_URL, {
+    await fetch(N8N_WEBHOOK_URL, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data)
+      mode: 'no-cors',
+      body
     });
-    /* ===== N8N FETCH PLACEHOLDER (CLEARLY MARKED) - END ===== */
-
-    if (!response.ok) throw new Error('Webhook request failed');
 
     document.getElementById('form-view').style.display = 'none';
     document.getElementById('success-view').style.display = 'block';
