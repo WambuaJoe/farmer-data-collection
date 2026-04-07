@@ -396,11 +396,11 @@
 
 <script>
 const PRODUCES = [
-  { id:'broccoli',     label:'Broccoli',             varieties:['Heritage F1'] },
+  { id:'broccoli',     label:'Broccoli',             varieties:['Green Pia 1','Heritage F1'] },
   { id:'butternut',    label:'Butternut',            varieties:[] },
   { id:'cabbage',      label:'Cabbage',              varieties:['Copenhagen','Gloria F1','Kiboko','Pruktor F1'] },
   { id:'carrot',       label:'Carrot',               varieties:['Nantes'] },
-  { id:'cauliflower',  label:'Cauliflower',          varieties:['Smilla F1'] },
+  { id:'cauliflower',  label:'Cauliflower',          varieties:['Andromeda','Smilla F1'] },
   { id:'celery',       label:'Celery',               varieties:['Pascal','Tall Utah'] },
   { id:'chillies',     label:'Chillies',             varieties:['Red thunder F1'] },
   { id:'courgette',    label:'Courgette / zucchini', varieties:['Amanda F1'] },
@@ -408,6 +408,7 @@ const PRODUCES = [
   { id:'french_beans', label:'French beans',         varieties:['Amy','Kazuri','Paulista','Samantha'] },
   { id:'garlic',       label:'Garlic',               varieties:['Local'] },
   { id:'green_caps',   label:'Green capsicum',       varieties:['California wonder'] },
+  { id:'herbs',        label:'Herbs',                varieties:[] },
   { id:'kales',        label:'Kales',                varieties:['Curly kale','Kinale','Thousand headed'] },
   { id:'leeks',        label:'Leeks',                varieties:['Standard leeks'] },
   { id:'lettuce',      label:'Lettuce',              varieties:['Butterhead','Loose leaf'] },
@@ -456,9 +457,17 @@ function renderVarietyCards() {
   container.innerHTML = PRODUCES.filter(p => selected.has(p.id)).map(p => {
     const singleVariety = p.varieties.length === 1;
     const multiVariety  = p.varieties.length > 1;
+    const isCustom      = p.id === 'herbs';
     let varietyHTML = '';
 
-    if (singleVariety) {
+    if (isCustom) {
+      varietyHTML = `
+        <div class="field" id="f-herb-type-${p.id}">
+          <label>Herb type <span class="req">*</span></label>
+          <input type="text" id="herb_type_${p.id}" placeholder="e.g. Basil, Oregano, Mint">
+          <div class="err-msg">Enter herb type</div>
+        </div>`;
+    } else if (singleVariety) {
       varietyHTML = `
         <div class="variety-checks">
           <span class="check-label">Variety</span>
@@ -577,7 +586,19 @@ function validate() {
   }
 
   PRODUCES.filter(p => selected.has(p.id)).forEach(p => {
-    if (p.varieties.length > 1) {
+    if (p.id === 'herbs') {
+      const herbType = document.getElementById('herb_type_' + p.id);
+      setErr('f-herb-type-' + p.id, 'herb_type_' + p.id, !herbType || !herbType.value.trim());
+      if (!herbType || !herbType.value.trim()) ok = false;
+
+      const vol = document.getElementById('vol_' + p.id);
+      setErr('f-vol-' + p.id, 'vol_' + p.id, !vol || !vol.value.trim());
+      if (!vol || !vol.value.trim()) ok = false;
+
+      const dt = document.getElementById('date_' + p.id);
+      setErr('f-date-' + p.id, 'date_' + p.id, !dt || !dt.value);
+      if (!dt || !dt.value) ok = false;
+    } else if (p.varieties.length > 1) {
       const checked = [...document.querySelectorAll(`input[name="var_${p.id}"]:checked`)];
       const vc = document.getElementById('vc_' + p.id);
       if (checked.length === 0) { if (vc) vc.classList.add('has-error'); ok = false; }
@@ -620,6 +641,18 @@ function validate() {
 /* ── Collect data ── */
 function collectData() {
   const produces = PRODUCES.filter(p => selected.has(p.id)).map(p => {
+    if (p.id === 'herbs') {
+      const herbType = document.getElementById('herb_type_' + p.id).value.trim();
+      return {
+        produce: p.label,
+        varieties: [{
+          name: herbType,
+          volume: document.getElementById('vol_' + p.id).value.trim(),
+          harvest_date: document.getElementById('date_' + p.id).value,
+        }],
+      };
+    }
+
     if (p.varieties.length > 1) {
       const checkedVarieties = [...document.querySelectorAll(`input[name="var_${p.id}"]:checked`)].map(c => c.value);
       return {
