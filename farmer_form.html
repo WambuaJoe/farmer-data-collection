@@ -426,7 +426,7 @@ const PRODUCES = [
 ];
 
 const selected = new Set();
-const N8N_WEBHOOK_URL = 'https://takumi-n8n.up.railway.app/webhook/b0d1f1fc-67ff-447d-be49-15ebd6a7b03d';
+const N8N_WEBHOOK_URL = 'https://vmi3196764.contaboserver.net/webhook/farmer-data';
 
 /* ── Render produce grid ── */
 function renderGrid() {
@@ -733,7 +733,7 @@ function resetForm() {
     if (el.type === 'checkbox' || el.type === 'radio') el.checked = false;
     else el.value = '';
     el.classList.remove('err');
-  });
+  }); 
   document.querySelectorAll('.has-error').forEach(el => el.classList.remove('has-error'));
   document.querySelectorAll('.err-msg').forEach(el => el.style.display = '');
   document.getElementById('produce-grid').classList.remove('grid-err');
