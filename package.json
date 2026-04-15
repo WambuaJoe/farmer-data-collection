@@ -1,0 +1,23 @@
+{
+  "name": "farmer-data-collection",
+  "version": "1.0.0",
+  "description": "Farmer data collection form with Vercel Web Analytics",
+  "main": "index.html",
+  "scripts": {
+    "test": "echo \"No tests configured\""
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/WambuaJoe/farmer-data-collection.git"
+  },
+  "keywords": [
+    "farmer",
+    "data-collection",
+    "forms"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@vercel/analytics": "^1.4.1"
+  }
+}
